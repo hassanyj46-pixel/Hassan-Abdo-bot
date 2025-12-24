@@ -7,14 +7,14 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 # توكن التليجرام الخاص بك
 TELEGRAM_TOKEN = '8516104095:AAFUuC0c79hDTXQ9j73eYf9IqE7HkR5H28k'
 
-# مفتاح Gemini API الكامل
-API_KEY = "AIzaSyDMIOKTMjnpJ76H1YIqE7HkR5H28k"
+# مفتاح Gemini API الجديد الذي أرسلته
+API_KEY = "AIzaSyDMI0KTMjnpJ7L6Z04e2xfP-Uc7XdSZJhE"
 
 # إعداد نموذج Gemini بشكل صحيح
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# إعداد السجلات لمراقبة عمل البوت
+# إعداد السجلات لمراقبة العمل
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -30,14 +30,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         # الحصول على الرد من Gemini
         response = model.generate_content(user_text)
-        await update.message.reply_text(response.text)
+        if response.text:
+            await update.message.reply_text(response.text)
+        else:
+            await update.message.reply_text("عذراً، لم أستطع تكوين رد حالياً.")
     except Exception as e:
         logging.error(f"Error: {e}")
-        await update.message.reply_text("عذراً، واجهت مشكلة في معالجة طلبك.")
+        # إذا حدث خطأ، سيخبرك البوت بنوع الخطأ لسهولة الإصلاح
+        await update.message.reply_text(f"حدث خطأ فني: {str(e)}")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """رسالة الترحيب"""
-    await update.message.reply_text("مرحباً! أنا بوت حسن عبدو. كيف يمكنني مساعدتك اليوم؟")
+    await update.message.reply_text("أهلاً بك! أنا بوت حسن عبدو المطور. كيف يمكنني مساعدتك اليوم؟")
 
 if __name__ == '__main__':
     # تشغيل البوت وربطه بتليجرام
@@ -47,5 +51,5 @@ if __name__ == '__main__':
     application.add_handler(CommandHandler('start', start))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
     
-    print("✅ البوت يعمل الآن...")
+    print("✅ البوت يعمل الآن بنجاح...")
     application.run_polling()
