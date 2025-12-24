@@ -4,13 +4,13 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
 # --- الإعدادات الخاصة بك ---
-# توكن التليجرام الخاص بك
-TELEGRAM_TOKEN = '8516104095:AAFUuC0c79hDTXQ9j73eYf9IqE7HkR5H28k'
+# توكن التليجرام الجديد الذي أرسلته
+TELEGRAM_TOKEN = '8516104095:AAFUuCOc79hDTXQ6VupgpPva0D3RHDtJaF4'
 
-# مفتاح Gemini API الجديد الذي أرسلته
+# مفتاح Gemini API
 API_KEY = "AIzaSyDMI0KTMjnpJ7L6Z04e2xfP-Uc7XdSZJhE"
 
-# إعداد نموذج Gemini بشكل صحيح
+# إعداد نموذج Gemini
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -22,6 +22,9 @@ logging.basicConfig(
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """معالجة الرسائل الواردة باستخدام الذكاء الاصطناعي"""
+    if not update.message or not update.message.text:
+        return
+
     user_text = update.message.text
     
     # إظهار حالة "جاري الكتابة" في تليجرام
@@ -36,7 +39,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("عذراً، لم أستطع تكوين رد حالياً.")
     except Exception as e:
         logging.error(f"Error: {e}")
-        # إذا حدث خطأ، سيخبرك البوت بنوع الخطأ لسهولة الإصلاح
         await update.message.reply_text(f"حدث خطأ فني: {str(e)}")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -53,3 +55,4 @@ if __name__ == '__main__':
     
     print("✅ البوت يعمل الآن بنجاح...")
     application.run_polling()
+ 
