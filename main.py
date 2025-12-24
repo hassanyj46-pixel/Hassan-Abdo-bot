@@ -1,16 +1,17 @@
 import logging
+import os
+import asyncio
 import google.generativeai as genai
 from telegram import Update
+from telegram.constants import ChatAction
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
-# --- الإعدادات المصححة ---
-TELEGRAM_TOKEN = '8516104095:AAFUuCOc79hDTXQ6VupgpPva0D3RHDtJaF4'
-API_KEY = "AIzaSyDMI0KTMjnpJ7L6Z04e2xfP-Uc7XdSZJhE"
+# ====== الإعدادات ======
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+API_KEY = os.getenv("GEMINI_API_KEY")
 
-# إعداد Gemini مع التأكد من اسم النموذج الصحيح
 genai.configure(api_key=API_KEY)
-# قمت بتغيير الاسم هنا ليتوافق مع النسخة المستقرة
-model = genai.GenerativeModel('gemini-pro') 
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -22,27 +23,36 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     user_text = update.message.text
-    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
-    
+    await context.bot.send_chat_action(
+        chat_id=update.effective_chat.id,
+        action=ChatAction.TYPING
+    )
+
     try:
-        # توليد المحتوى
-        response = model.generate_content(user_text)
+        response = await asyncio.to_thread(
+            model.generate_content,
+            user_text
+        )
+
         if response.text:
             await update.message.reply_text(response.text)
         else:
-            await update.message.reply_text("عذراً، لم أستطع تكوين رد حالياً.")
+            await update.message.reply_text("❌ لم أستطع إنشاء رد حالياً.")
+
     except Exception as e:
-        logging.error(f"Error: {e}")
-        # إذا استمر الخطأ، سنحاول استخدام اسم نموذج بديل تلقائياً
-        await update.message.reply_text(f"حدث خطأ فني، جاري محاولة الإصلاح...")
+        logging.error(e)
+        await update.message.reply_text("⚠️ حدث خطأ تقني، حاول لاحقاً.")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("أهلاً بك! أنا بوت حسن عبدو. أنا جاهز للرد على أسئلتك الآن.")
+    await update.message.reply_text(
+        "👋 أهلاً بك! أنا بوت حسن عبدو المدعوم بـ Gemini 🤖"
+    )
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+
     application.add_handler(CommandHandler('start', start))
-    application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
-    
-    print("✅ البوت يعمل الآن ويتم التواصل مع Gemini...")
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    print("✅ البوت يعمل الآن...")
     application.run_polling()
